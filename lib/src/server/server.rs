@@ -311,7 +311,8 @@ impl Server {
         let listener = match TcpListener::bind(&sock_addr).await {
             Ok(listener) => listener,
             Err(err) => {
-                panic!("Could not bind to socket {:?}", err)
+                error!("Could not bind to socket {:?}", err);
+                return;
             }
         };
 
