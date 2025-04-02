@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 //! Contains the definition of `LocalizedText`.
 use std::{
@@ -9,8 +9,6 @@ use std::{
 };
 
 use crate::types::{encoding::*, string::*};
-
-use serde::{Deserialize, Serialize};
 
 /// JSON encoding
 ///  Locale    The Localeportion of LocalizedTextvalues shall be encoded as a JSON string

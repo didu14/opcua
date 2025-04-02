@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 use std::collections::{BTreeSet, HashMap, VecDeque};
 use std::sync::Arc;
@@ -406,7 +406,11 @@ impl Subscription {
         // Look at the last expiration time compared to now and see if it matches
         // or exceeds the publishing interval
         let publishing_interval = super::duration_from_ms(self.publishing_interval);
-        let elapsed = now.signed_duration_since(self.last_time_publishing_interval_elapsed);
+        // TODO unwrap logic needs to change
+        let elapsed = now
+            .signed_duration_since(self.last_time_publishing_interval_elapsed)
+            .to_std()
+            .unwrap();
         if elapsed >= publishing_interval {
             self.last_time_publishing_interval_elapsed = *now;
             true
@@ -481,7 +485,6 @@ impl Subscription {
     }
 
     fn enqueue_notification(&mut self, notification: NotificationMessage) {
-        use std::u32;
         // For sanity, check the sequence number is the expected sequence number.
         let expected_sequence_number = if self.last_sequence_number == u32::MAX {
             1

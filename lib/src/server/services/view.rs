@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 use std::result::Result;
 use std::sync::Arc;
@@ -182,7 +182,6 @@ impl ViewService {
                                 }
                                 Ok(result) => {
                                     let targets = if !result.is_empty() {
-                                        use std::u32;
                                         let targets = result
                                             .iter()
                                             .map(|node_id| BrowsePathTarget {

@@ -1,11 +1,12 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 use std::env;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::thread;
+use std::time::Duration;
 
 use opcua::server::prelude::*;
 use opcua::sync::Mutex;
@@ -88,8 +89,6 @@ fn main() {
     // of the variables and observe games being played.
 
     thread::spawn(move || {
-        use std::time::Duration;
-
         let sleep_time = Duration::from_millis(1500);
         let mut game = game.lock();
         loop {

@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 //! Provides configuration settings for the server including serialization and deserialization from file.
 use std::{
@@ -19,8 +19,8 @@ use super::constants;
 
 pub const ANONYMOUS_USER_TOKEN_ID: &str = "ANONYMOUS";
 
-const RECEIVE_BUFFER_SIZE: usize = std::u16::MAX as usize;
-const SEND_BUFFER_SIZE: usize = std::u16::MAX as usize;
+const RECEIVE_BUFFER_SIZE: usize = u16::MAX as usize;
+const SEND_BUFFER_SIZE: usize = u16::MAX as usize;
 
 #[derive(Debug, PartialEq, Serialize, Deserialize, Clone)]
 #[serde(default)]

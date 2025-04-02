@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 //! Contains the implementation of `ExpandedNodeId`.
 
@@ -8,7 +8,6 @@ use std::{
     self, fmt,
     io::{Read, Write},
     str::FromStr,
-    u16, u32,
 };
 
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};

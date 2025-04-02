@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 //! Contains the most of the implementation of `Variant`. Some substantial chunks like JSON serialization
 //! are moved off into their own files due to the complexity of this functionality.
@@ -10,7 +10,6 @@ use std::{
     fmt,
     io::{Read, Write},
     str::FromStr,
-    {i16, i32, i64, i8, u16, u32, u64, u8},
 };
 
 use crate::types::{
@@ -37,9 +36,10 @@ use crate::types::{
 ///
 /// As variants may be passed around a lot on the stack, Boxes are used for more complex types to
 /// keep the size of this type down a bit, especially when used in arrays.
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Default)]
 pub enum Variant {
     /// Empty type has no value. It is equivalent to a Null value (part 6 5.1.6)
+    #[default]
     Empty,
     /// Boolean
     Boolean(bool),
@@ -95,6 +95,73 @@ pub enum Variant {
     /// arrays will be rejected.
     Array(Box<Array>),
 }
+
+macro_rules! impl_from_variant_for {
+    ($tp: ty, $vt: expr, $venum: path) => {
+        impl TryFrom<Variant> for $tp {
+            type Error = ();
+            fn try_from(v: Variant) -> Result<Self, Self::Error> {
+                let casted = v.cast($vt);
+                if let $venum(x) = casted {
+                    Ok(x)
+                } else {
+                    Err(())
+                }
+            }
+        }
+    };
+}
+
+macro_rules! impl_from_variant_for_array {
+    ($tp: ty, $vt: expr, $venum: path) => {
+        impl<const N: usize> TryFrom<Variant> for [$tp; N] {
+            type Error = ();
+            fn try_from(v: Variant) -> Result<Self, Self::Error> {
+                if let Variant::Array(arr) = v {
+                    let mut result = Vec::with_capacity(N);
+                    for val in arr.values {
+                        if result.len() == N {
+                            break;
+                        }
+                        let casted = val.cast($vt);
+                        if let $venum(x) = casted {
+                            result.push(x);
+                        } else {
+                            return Err(());
+                        }
+                    }
+                    result.try_into().map_err(|_| ())
+                } else {
+                    Err(())
+                }
+            }
+        }
+    };
+}
+
+impl_from_variant_for!(bool, VariantTypeId::Boolean, Variant::Boolean);
+impl_from_variant_for!(u8, VariantTypeId::Byte, Variant::Byte);
+impl_from_variant_for!(i8, VariantTypeId::SByte, Variant::SByte);
+impl_from_variant_for!(i16, VariantTypeId::Int16, Variant::Int16);
+impl_from_variant_for!(i32, VariantTypeId::Int32, Variant::Int32);
+impl_from_variant_for!(i64, VariantTypeId::Int64, Variant::Int64);
+impl_from_variant_for!(u16, VariantTypeId::UInt16, Variant::UInt16);
+impl_from_variant_for!(u32, VariantTypeId::UInt32, Variant::UInt32);
+impl_from_variant_for!(u64, VariantTypeId::UInt64, Variant::UInt64);
+impl_from_variant_for!(f32, VariantTypeId::Float, Variant::Float);
+impl_from_variant_for!(f64, VariantTypeId::Double, Variant::Double);
+
+impl_from_variant_for_array!(bool, VariantTypeId::Boolean, Variant::Boolean);
+impl_from_variant_for_array!(u8, VariantTypeId::Byte, Variant::Byte);
+impl_from_variant_for_array!(i8, VariantTypeId::SByte, Variant::SByte);
+impl_from_variant_for_array!(i16, VariantTypeId::Int16, Variant::Int16);
+impl_from_variant_for_array!(i32, VariantTypeId::Int32, Variant::Int32);
+impl_from_variant_for_array!(i64, VariantTypeId::Int64, Variant::Int64);
+impl_from_variant_for_array!(u16, VariantTypeId::UInt16, Variant::UInt16);
+impl_from_variant_for_array!(u32, VariantTypeId::UInt32, Variant::UInt32);
+impl_from_variant_for_array!(u64, VariantTypeId::UInt64, Variant::UInt64);
+impl_from_variant_for_array!(f32, VariantTypeId::Float, Variant::Float);
+impl_from_variant_for_array!(f64, VariantTypeId::Double, Variant::Double);
 
 impl From<()> for Variant {
     fn from(_: ()) -> Self {
@@ -603,12 +670,6 @@ impl BinaryEncoder<Variant> for Variant {
     }
 }
 
-impl Default for Variant {
-    fn default() -> Self {
-        Variant::Empty
-    }
-}
-
 /// This implementation is mainly for debugging / convenience purposes, to eliminate some of the
 /// noise in common types from using the Debug trait.
 impl fmt::Display for Variant {
@@ -639,7 +700,7 @@ impl fmt::Display for Variant {
 impl Variant {
     /// Test the flag (convenience method)
     pub fn test_encoding_flag(encoding_mask: u8, flag: u8) -> bool {
-        encoding_mask == flag as u8
+        encoding_mask == flag
     }
 
     /// Returns the length of just the value, not the encoding flag
@@ -789,6 +850,16 @@ impl Variant {
         if result == Variant::Empty {
             match *self {
                 Variant::Boolean(v) => match target_type {
+                    VariantTypeId::Byte => Variant::Byte(u8::from(v)),
+                    VariantTypeId::SByte => Variant::SByte(i8::from(v)),
+                    VariantTypeId::Float => Variant::Float(f32::from(v)),
+                    VariantTypeId::Int16 => Variant::Int16(i16::from(v)),
+                    VariantTypeId::Int32 => Variant::Int32(i32::from(v)),
+                    VariantTypeId::Int64 => Variant::Int64(i64::from(v)),
+                    VariantTypeId::UInt16 => Variant::UInt16(u16::from(v)),
+                    VariantTypeId::UInt32 => Variant::UInt32(u32::from(v)),
+                    VariantTypeId::UInt64 => Variant::UInt64(u64::from(v)),
+                    VariantTypeId::Double => Variant::Double(f64::from(v)),
                     VariantTypeId::String => {
                         UAString::from(if v { "true" } else { "false" }).into()
                     }
@@ -1112,7 +1183,7 @@ impl Variant {
             Variant::StatusCode(v) => match target_type {
                 VariantTypeId::Int32 => (v.bits() as i32).into(),
                 VariantTypeId::Int64 => (v.bits() as i64).into(),
-                VariantTypeId::UInt32 => (v.bits() as u32).into(),
+                VariantTypeId::UInt32 => v.bits().into(),
                 VariantTypeId::UInt64 => (v.bits() as u64).into(),
                 _ => Variant::Empty,
             },
@@ -1560,7 +1631,7 @@ impl Variant {
                             } else {
                                 max
                             };
-                            let values = &values[min as usize..=max];
+                            let values = &values[min..=max];
                             let values: Vec<Variant> = values.to_vec();
                             Ok(Variant::from((array.value_type, values)))
                         }

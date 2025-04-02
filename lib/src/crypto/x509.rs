@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 // X509 certificate wrapper.
 
@@ -12,7 +12,7 @@ use std::{
     result::Result,
 };
 
-use chrono::{DateTime, TimeZone, Utc};
+use chrono::{DateTime, NaiveDateTime, Utc};
 use openssl::{
     asn1::*,
     hash,
@@ -593,7 +593,8 @@ impl X509 {
         } else {
             date
         };
-        Utc.datetime_from_str(date, "%b %d %H:%M:%S %Y")
+        NaiveDateTime::parse_from_str(date, "%b %d %H:%M:%S %Y")
+            .map(|naive| naive.and_utc())
             .map_err(|e| {
                 error!("Cannot parse ASN1 date, err = {:?}", e);
                 X509Error

@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 //! Contains the implementation of `UAString`.
 
@@ -46,7 +46,7 @@ impl Serialize for UAString {
         S: Serializer,
     {
         if let Some(s) = self.value.as_ref() {
-            serializer.serialize_str(&s)
+            serializer.serialize_str(s)
         } else {
             serializer.serialize_none()
         }

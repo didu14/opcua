@@ -1,10 +1,10 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 //! Provides the [`Server`] type and functionality related to it.
 
-use std::{marker::Sync, net::SocketAddr, panic::AssertUnwindSafe, sync::Arc};
+use std::{marker::Sync, net::SocketAddr, sync::Arc};
 
 use tokio::{
     self,
@@ -105,9 +105,9 @@ impl Server {
             "opc.tcp://{}:{}",
             config.tcp_config.host, config.tcp_config.port
         );
-        let max_subscriptions = config.limits.max_subscriptions as usize;
-        let max_monitored_items_per_sub = config.limits.max_monitored_items_per_sub as usize;
-        let max_monitored_item_queue_size = config.limits.max_monitored_item_queue_size as usize;
+        let max_subscriptions = config.limits.max_subscriptions;
+        let max_monitored_items_per_sub = config.limits.max_monitored_items_per_sub;
+        let max_monitored_item_queue_size = config.limits.max_monitored_item_queue_size;
 
         let diagnostics = Arc::new(RwLock::new(ServerDiagnostics::default()));
         let min_publishing_interval_ms = config.limits.min_publishing_interval * 1000.0;
@@ -555,23 +555,27 @@ impl Server {
                 let mut last_registered = trace_lock!(last_registered);
                 if now.duration_since(*last_registered) >= register_duration {
                     *last_registered = now;
-                    // Even though the client uses tokio internally, the client's API is synchronous
-                    // so the registration will happen on its own thread. The expectation is that
-                    // it will run and either succeed, or it will fail but either way the operation
-                    // will have completed before the next timer fires.
-                    let server_state = server_state.clone();
-                    let discovery_server_url = discovery_server_url.clone();
-                    let _ = std::thread::spawn(move || {
-                        let _ = std::panic::catch_unwind(AssertUnwindSafe(move || {
-                            let server_state = trace_read_lock!(server_state);
-                            if server_state.is_running() {
-                                discovery::register_with_discovery_server(
-                                    &discovery_server_url,
-                                    &server_state,
-                                );
-                            }
-                        }));
-                    });
+                    drop(last_registered);
+                    let (is_running, pki_dir, registered_server) = {
+                        let server_state = trace_read_lock!(server_state);
+                        let pki_dir = {
+                            let config = server_state.config.read();
+                            config.pki_dir.clone()
+                        };
+                        (
+                            server_state.is_running(),
+                            pki_dir,
+                            server_state.registered_server(),
+                        )
+                    };
+                    if is_running {
+                        discovery::register_with_discovery_server(
+                            &discovery_server_url,
+                            registered_server,
+                            pki_dir,
+                        )
+                        .await;
+                    }
                 }
             }
             info!("Discovery timer task is finished");

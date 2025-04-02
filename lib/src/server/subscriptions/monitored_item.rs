@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 use std::collections::{BTreeSet, VecDeque};
 use std::result::Result;
@@ -259,7 +259,10 @@ impl MonitoredItem {
             } else {
                 // Compare sample interval to the time elapsed
                 let sampling_interval = super::duration_from_ms(self.sampling_interval);
-                let elapsed = now.signed_duration_since(self.last_sample_time);
+                let elapsed = now
+                    .signed_duration_since(self.last_sample_time)
+                    .to_std()
+                    .unwrap();
                 elapsed >= sampling_interval
             };
 

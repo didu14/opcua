@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 //! Contains the implementation of `NodeId`.
 
@@ -11,7 +11,6 @@ use std::{
     io::{Read, Write},
     str::FromStr,
     sync::atomic::{AtomicUsize, Ordering},
-    u16, u32,
 };
 
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
@@ -74,7 +73,7 @@ impl From<i32> for Identifier {
 
 impl From<u32> for Identifier {
     fn from(v: u32) -> Self {
-        Identifier::Numeric(v as u32)
+        Identifier::Numeric(v)
     }
 }
 

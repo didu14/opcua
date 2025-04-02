@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 //! Contains the implementation of `Guid`.
 
@@ -49,7 +49,7 @@ impl fmt::Display for Guid {
 
 impl fmt::Debug for Guid {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.uuid.to_hyphenated())
+        write!(f, "{}", self.uuid.hyphenated())
     }
 }
 
@@ -80,6 +80,12 @@ impl FromStr for Guid {
         Uuid::from_str(s).map(|uuid| Guid { uuid }).map_err(|err| {
             error!("Guid cannot be parsed from string, err = {:?}", err);
         })
+    }
+}
+
+impl From<Uuid> for Guid {
+    fn from(uuid: Uuid) -> Self {
+        Self { uuid }
     }
 }
 

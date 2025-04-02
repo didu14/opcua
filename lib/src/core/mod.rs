@@ -1,6 +1,6 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 //! The OPC UA Core module holds functionality that is common to server and clients that make use of OPC UA.
 //! It contains message chunking, cryptography / pki, communications and standard handshake messages.
@@ -68,7 +68,7 @@ pub mod debug {
         let mut hex_line = format!("{:08x}: ", 0);
 
         for (i, b) in buf.iter().enumerate() {
-            let value = *b as u8;
+            let value = { *b };
             if i > 0 && i % line_len == 0 {
                 trace!(target: "hex", "{} {}", hex_line, char_line);
                 hex_line = format!("{:08}: ", i);

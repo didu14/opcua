@@ -1,15 +1,13 @@
 // OPCUA for Rust
 // SPDX-License-Identifier: MPL-2.0
-// Copyright (C) 2017-2022 Adam Lock
+// Copyright (C) 2017-2024 Adam Lock
 
 use std::sync::{
     atomic::{AtomicU16, AtomicU32, Ordering},
     Arc,
 };
 
-use chrono;
-use rand;
-
+use chrono::TimeDelta;
 use opcua::server::{events::event::*, prelude::*};
 
 pub fn add_machinery(server: &mut Server, ns: u16, raise_event: bool) {
@@ -214,7 +212,7 @@ fn raise_machine_cycled_event(
 ) {
     // Remove old events
     let now = chrono::Utc::now();
-    let happened_before = now - chrono::Duration::minutes(5);
+    let happened_before = now - TimeDelta::try_minutes(5).unwrap();
     purge_events(
         source_machine_id,
         MachineCycledEventType::event_type_id(ns),
